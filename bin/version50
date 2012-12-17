@@ -1,0 +1,20 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'version50'
+
+# display help if no options are given
+if ARGV.length == 0
+    Version50.new :action => 'help'
+    exit
+end
+
+# hide ruby-related ctrl-c messages
+trap('INT') { 
+    puts ''
+    exit 
+}
+
+# pass action to version50 handler
+action = ARGV[0]
+version50 = Version50.new :action => action
