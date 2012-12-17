@@ -17,9 +17,25 @@ class Version50
         # set user info
         @scm.config config['name'], config['email']
 
-        # save a new version
+        # commit a new version without pushing
+        if args[:action] == 'commit'
+            @scm.commit
+        end
+
+        # commit a new version without pushing
+        if args[:action] == 'history'
+            @scm.log
+        end
+
+        # push the current project
+        if args[:action] == 'push'
+            @scm.push
+        end
+
+        # save a new version, which means commit and push
         if args[:action] == 'save'
-            @scm.save
+            @scm.commit
+            @scm.push
         end
 
         # get the current status of files
@@ -56,7 +72,7 @@ class Version50
 
     # given a parsed SCM status output, show file status
     def output_status files
-        # new files
+        # new files (ansi green)
         if files[:added].length > 0
             print "\033[32m"
             puts "\nNew Files"
@@ -65,12 +81,13 @@ class Version50
             files[:added].each do |file|
                 puts "* #{file}"
             end
+            puts ""
         end
 
-        # modified files
+        # modified files (ansi yellow)
         if files[:modified].length > 0
             print "\033[33m"
-            puts "\n\nModified Files"
+            puts "\nModified Files"
             puts "==============\n\n"
 
             files[:modified].each do |file|
@@ -78,17 +95,20 @@ class Version50
             end
         end
 
-        # deleted files
+        # deleted files (ansi red)
         if files[:deleted].length > 0
             print "\033[31m"
-            puts "\n\nDeleted Files"
+            puts "\nDeleted Files"
             puts "=============\n\n"
 
             files[:deleted].each do |file|
                 puts "* #{file}"
             end
+
+            puts ""
         end
 
+        # ansi reset
         print "\033[0m\n"
     end
 

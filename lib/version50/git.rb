@@ -1,8 +1,18 @@
 require 'version50/scm'
 
 class Git < SCM
+    # commit a new version without pushing
+    def commit 
+        # prompt for commit message
+        message = super
+
+        # add all files and commit
+        `git add --all`
+        `git commit -m "#{message}"`
+    end
+
     # configure the repo with user's info
-    def config(name, email)
+    def config name, email
         # make sure repo exists
         self.init
 
@@ -13,41 +23,46 @@ class Git < SCM
 
     # create a new repo
     def init
+        # git init if .git folder doesn't exist
         if !File.directory? '.git'
             `git init`
         end
     end
 
+    # view the project history
     def log
+        # great idea or greatest idea?
+        delimiter = '!@#%^&*'
+        history = `git log --graph --pretty=format:'%h #{delimiter} %s #{delimiter} %cr #{delimiter} %an' --abbrev-commit`
+
+        # iterate over history lines
+        lines = history.split "\n"
+        lines.each_with_index do |line, i|
+            # display individual commits
+            commit = line.split(delimiter).map { |s| s.strip }
+            puts "\033[031m#%03d \033[0m#{commit[1]} \033[34m(#{commit[2]} by #{commit[3]})" % (lines.length - i)
+        end
+
+        print "\033[0m"
     end
 
     def pull
     end
 
+    # push existing commits
     def push
-    end
-
-    # save a new version
-    def save
-        # prompt for commit message
-        message = super
-
-        # add all files and commit
-        `git add --all`
-        `git commit -m "#{message}"`
+        `git push -u origin master`
     end
 
     # view changed files
     def status
         # get status from SCM
-        #status = `git status`
-        status = "# On branch master\nChanges not staged for commit:\n#   (use \"git add <file>...\" to update what will be committed)\n#   (use \"git checkout -- <file>...\" to discard changes in working directory)\n#\n# modified:   file1\n#\n# Untracked files:\n#   (use \"git add <file>...\" to include in what will be committed)\n#\n# file2\nno changes added to commit (use \"git add\" and/or \"git commit -a\")"
-        lines = status.split "\n"
+        status = `git status`
 
         # iterate over each line in status
         tracked = 0
         added, modified, deleted = [], [], []
-        lines.each do |line|
+        status.split("\n").each do |line|
             # ignore git system lines
             if tracked > 0 && line && line !=~ /\(use "git add <file>\.\.\." to include in what will be committed\)/ &&
                     line !=~ /\(use "git add <file>\.\.\." to update what will be committed\)/ &&

@@ -1,4 +1,10 @@
 class SCM
+    # commit changes without pushing
+    def commit
+        print "What changes have you made since your last save? "
+        message = $stdin.gets.chomp
+    end
+
     # configure the repo with the user's info
     def config
     end
@@ -13,13 +19,14 @@ class SCM
     def pull
     end
 
+    # push existing commits
     def push
     end
 
-    # save a new version
+    # shortcut for commit and push
     def save
-        print "What changes have you made since your last save? "
-        message = $stdin.gets.chomp
+        self.commit
+        self.push
     end
 
     # view changed files
