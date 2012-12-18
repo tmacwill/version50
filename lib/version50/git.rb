@@ -12,13 +12,19 @@ class Git < SCM
     end
 
     # configure the repo with user's info
-    def config name, email
+    def config info
         # make sure repo exists
         self.init
 
         # configure git user
-        `git config user.name "#{name}"`
-        `git config user.email "#{email}"`
+        `git config user.name "#{info['name']}"`
+        `git config user.email "#{info['email']}"`
+
+        # configure remote if not already
+        origin = `git remote`
+        if origin == ''
+            `git remote add origin #{info['remote']}`
+        end
     end
 
     # create a new repo
@@ -26,6 +32,7 @@ class Git < SCM
         # git init if .git folder doesn't exist
         if !File.directory? '.git'
             `git init`
+            `echo ".version50" > .gitignore`
         end
     end
 
@@ -51,7 +58,7 @@ class Git < SCM
 
     # push existing commits
     def push
-        `git push -u origin master`
+        `git push -u origin master > /dev/null 2>&1`
     end
 
     # view changed files

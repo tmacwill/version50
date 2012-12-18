@@ -13,6 +13,7 @@ class SCM
     def init
     end
 
+    # view the project history
     def log
     end
 

@@ -15,7 +15,7 @@ class Version50
         end
 
         # set user info
-        @scm.config config['name'], config['email']
+        @scm.config config
 
         # commit a new version without pushing
         if args[:action] == 'commit'
@@ -52,13 +52,15 @@ class Version50
         name = $stdin.gets.chomp
         print "And your email? "
         email = $stdin.gets.chomp
-        print "Will your project use git? "
-        git = $stdin.gets.chomp
+        puts "If you're hosting your project using a service like GitHub or BitBucket, paste the URL here."
+        puts "If not, you can just leave this blank!"
+        remote = $stdin.gets.chomp
 
         # create configuration hash
         config = {
             'name' => name,
             'email' => email,
+            'remote' => remote,
             'scm' => 'git'
         }
 
@@ -106,6 +108,11 @@ class Version50
             end
 
             puts ""
+        end
+
+        # nothing changed
+        if files[:added].length == 0 && files[:modified].length == 0 && files[:deleted].length == 0
+            print "Nothing has changed since your last save!"
         end
 
         # ansi reset
