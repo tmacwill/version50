@@ -2,7 +2,7 @@ require 'version50/scm'
 
 class Git < SCM
     # commit a new version without pushing
-    def commit 
+    def commit
         # prompt for commit message
         message = super
 
@@ -22,7 +22,7 @@ class Git < SCM
 
         # configure remote if not already
         origin = `git remote`
-        if origin == ''
+        if origin == '' && info['remote'] != ''
             `git remote add origin #{info['remote']}`
         end
     end

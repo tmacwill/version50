@@ -10,9 +10,9 @@ if ARGV.length == 0
 end
 
 # hide ruby-related ctrl-c messages
-trap('INT') { 
+trap('INT') {
     puts ''
-    exit 
+    exit
 }
 
 # pass action to version50 handler
