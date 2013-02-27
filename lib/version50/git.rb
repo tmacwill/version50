@@ -1,3 +1,6 @@
+require 'fileutils'
+require 'tmpdir'
+
 require 'version50/scm'
 
 class Git < SCM
@@ -34,7 +37,7 @@ class Git < SCM
     def log
         # great idea or greatest idea?
         delimiter = '!@#%^&*'
-        history = `git log --graph --pretty=format:'%h #{delimiter} %s #{delimiter} %cr #{delimiter} %an' --abbrev-commit`
+        history = `git log --graph --pretty=format:'#{delimiter} %h #{delimiter} %s #{delimiter} %cr #{delimiter} %an' --abbrev-commit`
 
         # iterate over history lines
         commits = []
@@ -43,9 +46,10 @@ class Git < SCM
             # get information from individual commits
             commit = line.split(delimiter).map { |s| s.strip }
             commits.push({
-                :message => commit[1],
-                :timestamp => commit[2],
-                :author => commit[3]
+                :id => commit[1],
+                :message => commit[2],
+                :timestamp => commit[3],
+                :author => commit[4]
             })
         end
 
@@ -77,7 +81,7 @@ class Git < SCM
                 # untracked files, so mark as added
                 if tracked == 1
                     # determine filename
-                    line =~ /^#\s*([\w\/\.]+)/
+                    line =~ /^#\s*([\w\/\.\-]+)/
                     if $1
                         added.push $1
                     end
@@ -85,7 +89,7 @@ class Git < SCM
                 # currently-tracked files
                 elsif tracked == 2
                     # determine filename and modified status
-                    line =~ /^#\s*([\w]+):\s*([\w\/\.]+)/
+                    line =~ /^#\s*([\w]+):\s*([\w\/\.\-]+)/
 
                     # tracked and modified
                     if $1 == 'modified'
@@ -111,5 +115,30 @@ class Git < SCM
             :deleted => deleted,
             :modified => modified
         }
+    end
+
+    # warp to a specific version
+    def warp
+        # save current state before doing anything
+        revision = super
+
+        # determine project root and warp destination
+        path = @version50.root
+        dest = "version50-#{revision[:revision]}"
+
+        # create temporary directory to clone project into
+        Dir.mktmpdir do |d|
+            # clone project into temporary directory and revert to given revision
+            Dir.chdir(File.expand_path d)
+            `git clone #{path} . > /dev/null 2> /dev/null`
+            `git checkout #{revision[:id]} -f > /dev/null 2> /dev/null`
+
+            # switch back to project root and create folder for warp
+            Dir.chdir(File.expand_path path)
+            FileUtils.mkdir dest
+
+            # move all files in temporary directory into warp directory
+            FileUtils.mv(Dir.glob(File.expand_path(d) + '/*'), dest)
+        end
     end
 end

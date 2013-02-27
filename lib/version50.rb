@@ -18,6 +18,7 @@ class Version50
         if !config
             config = self.create
             @scm = self.scm config
+            @scm.init
         end
 
         # set user info
@@ -53,31 +54,31 @@ class Version50
 
         # warp to a past version
         if args[:action] == 'warp'
-            @scm.checkout
+            @scm.warp
         end
     end
 
     def create
         # prompt for user info
         puts "\nLooks like you're creating a new project!\n\n"
-        name = ask("What's your name? ").chomp
-        email = ask("And your email? ").chomp
+        name = ask("What's your name? ")
+        email = ask("And your email? ")
         puts "If you're hosting your project using a service like GitHub or BitBucket, paste the URL here."
         puts "If not, you can just leave this blank!"
         remote = $stdin.gets.chomp
 
         # create configuration hash
         config = {
-            'name' => name,
-            'email' => email,
-            'remote' => remote,
+            'name' => name.to_s,
+            'email' => email.to_s,
+            'remote' => remote.to_s,
             'scm' => 'git'
         }
 
         # prompt to create ssh key if one doesn't exist
         if !File.exists?(File.expand_path '~/.ssh/id_rsa') && !File.exists?(File.expand_path '~/.ssh/id_dsa')
             puts "It looks like you don't have an SSH key!"
-            answer = ask("Would you like to create one now? [y/n] ").chomp
+            answer = ask("Would you like to create one now? [y/n] ")
 
             # user responded with yes, so create key
             if answer == 'y' || answer == 'yes'
@@ -96,14 +97,14 @@ class Version50
         # prompt to add key to remote account
         if remote =~ /github/
             puts "Would you like to add your key to your GitHub account?"
-            answer = ask("If you've already done this, you won't need to do so again! [y/n] ").chomp.downcase
+            answer = ask("If you've already done this, you won't need to do so again! [y/n] ")
 
             # prompt for github info
             if answer == 'y' || answer == 'yes'
                 # repeat until authentication is successful
                 response = nil
                 while !response || response.code != '201'
-                    username = ask("What's your GitHub username? ").chomp
+                    username = ask("What's your GitHub username? ")
                     password = ask("And your GitHub password? ")  { |q| q.echo = '*' }
 
                     # post key to github
@@ -127,7 +128,7 @@ class Version50
             f.write config.to_yaml
         end
 
-        puts "\n\033[032mYour project created successfully, have fun!"
+        puts "\n\033[032mYour project was created successfully, now have fun!"
         puts "<3 version50\033[0m"
 
         return config
@@ -135,10 +136,12 @@ class Version50
 
     # given a parsed SCM history output, show log
     def output_history commits
+        # output each commit
         commits.each_with_index do |commit, i|
             puts "\033[031m#%03d \033[0m#{commit[:message]} \033[34m(#{commit[:timestamp]} by #{commit[:author]})" % (commits.length - i)
         end
 
+        # ansi reset
         print "\033[0m"
     end
 
@@ -228,7 +231,7 @@ class Version50
 
         # git backend
         if config['scm'] == 'git'
-            return Git.new
+            return Git.new(self)
         end
     end
 end
