@@ -13,9 +13,6 @@ class Git < SCM
 
     # configure the repo with user's info
     def config info
-        # make sure repo exists
-        self.init
-
         # configure git user
         `git config user.name "#{info['name']}"`
         `git config user.email "#{info['email']}"`
@@ -29,11 +26,8 @@ class Git < SCM
 
     # create a new repo
     def init
-        # git init if .git folder doesn't exist
-        if !File.directory? '.git'
-            `git init`
-            `echo ".version50" > .gitignore`
-        end
+        `git init`
+        `echo ".version50" > .gitignore`
     end
 
     # view the project history
@@ -48,7 +42,7 @@ class Git < SCM
         lines.each_with_index do |line, i|
             # get information from individual commits
             commit = line.split(delimiter).map { |s| s.strip }
-            commits.insert(0, {
+            commits.push({
                 :message => commit[1],
                 :timestamp => commit[2],
                 :author => commit[3]

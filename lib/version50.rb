@@ -42,12 +42,18 @@ class Version50
         # save a new version, which means commit and push
         if args[:action] == 'save'
             @scm.save
+            puts "\n\033[032mSaved a new version!\033[0m"
         end
 
         # get the current status of files
         if args[:action] == 'status'
             files = @scm.status
             self.output_status files
+        end
+
+        # warp to a past version
+        if args[:action] == 'warp'
+            @scm.checkout
         end
     end
 
@@ -121,8 +127,8 @@ class Version50
             f.write config.to_yaml
         end
 
-        puts "\nYour project created successfully, have fun!"
-        puts "<3 version50"
+        puts "\n\033[032mYour project created successfully, have fun!"
+        puts "<3 version50\033[0m"
 
         return config
     end
@@ -185,14 +191,32 @@ class Version50
 
     # parse the version50 configuration file
     def parse_config
-        # create config file if not existing
-        config_file = Dir.pwd + '/.version50'
-        if !File.exists? config_file
-            File.open(config_file, 'w') {}
+        # search upward to find project root
+        path = self.root
+        if path
+            return YAML.load_file(path + '/.version50')
         end
 
-        # load version50 config
-        YAML.load_file config_file
+        # project root not found
+        return false
+    end
+
+    # get the path of the project root, as determined by the location of the .version50 file
+    def root
+        # search upward for a file called ".version50"
+        path = Pathname.new(Dir.pwd)
+        while path.to_s != '/'
+            # check if file exists in this directory
+            if path.children(false).select { |e| e.to_s == '.version50' }.length > 0
+                return path.to_s
+            end
+
+            # continue to traverse upwards
+            path = path.parent
+        end
+
+        # .version50 file not found
+        return false
     end
 
     # determine the scm engine based on the config file
