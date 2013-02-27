@@ -1,8 +1,16 @@
 class SCM
     # commit changes without pushing
     def commit
-        print "What changes have you made since your last save? "
-        message = $stdin.gets.chomp
+        # check if we have anything to commit
+        files = self.status
+        if files[:added].length == 0 && files[:modified].length == 0 && files[:deleted].length == 0
+            puts "Nothing has changed since your last save!"
+
+        # prompt for commit message
+        else
+            puts "\033[34mWhat changes have you made since your last save?\033[0m "
+            message = $stdin.gets.chomp
+        end
     end
 
     # configure the repo with the user's info

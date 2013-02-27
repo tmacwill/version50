@@ -28,9 +28,10 @@ class Version50
             @scm.commit
         end
 
-        # commit a new version without pushing
-        if args[:action] == 'history'
-            @scm.log
+        # view the commit history
+        if args[:action] == 'history' || args[:action] == 'log'
+            commits = @scm.log
+            self.output_history commits
         end
 
         # push the current project
@@ -40,8 +41,7 @@ class Version50
 
         # save a new version, which means commit and push
         if args[:action] == 'save'
-            @scm.commit
-            @scm.push
+            @scm.save
         end
 
         # get the current status of files
@@ -125,6 +125,15 @@ class Version50
         puts "<3 version50"
 
         return config
+    end
+
+    # given a parsed SCM history output, show log
+    def output_history commits
+        commits.each_with_index do |commit, i|
+            puts "\033[031m#%03d \033[0m#{commit[:message]} \033[34m(#{commit[:timestamp]} by #{commit[:author]})" % (commits.length - i)
+        end
+
+        print "\033[0m"
     end
 
     # given a parsed SCM status output, show file status

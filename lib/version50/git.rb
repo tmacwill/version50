@@ -43,14 +43,19 @@ class Git < SCM
         history = `git log --graph --pretty=format:'%h #{delimiter} %s #{delimiter} %cr #{delimiter} %an' --abbrev-commit`
 
         # iterate over history lines
+        commits = []
         lines = history.split "\n"
         lines.each_with_index do |line, i|
-            # display individual commits
+            # get information from individual commits
             commit = line.split(delimiter).map { |s| s.strip }
-            puts "\033[031m#%03d \033[0m#{commit[1]} \033[34m(#{commit[2]} by #{commit[3]})" % (lines.length - i)
+            commits.insert(0, {
+                :message => commit[1],
+                :timestamp => commit[2],
+                :author => commit[3]
+            })
         end
 
-        print "\033[0m"
+        return commits
     end
 
     def pull
