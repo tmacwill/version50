@@ -5,11 +5,22 @@ require 'optparse'
 require 'yaml'
 require 'net/http'
 require 'net/https'
+require 'fileutils'
 require 'highline/import'
 HighLine.track_eof = false
 
 class Version50
-    def initialize(args)
+    def initialize(action, args = [])
+        # help text
+        if action == 'help'
+            return self.help
+        end
+
+        # version number
+        if action == 'version'
+            return self.version
+        end
+
         # parse configuration
         config = self.parse_config
         @scm = self.scm config
@@ -24,37 +35,62 @@ class Version50
         # set user info
         @scm.config config
 
+        # create a new branch
+        if action == 'branch'
+            @scm.branch args[0]
+        end
+
         # commit a new version without pushing
-        if args[:action] == 'commit'
+        if action == 'commit'
             @scm.commit
         end
 
         # view the commit history
-        if args[:action] == 'history' || args[:action] == 'log'
+        if action == 'history' || action == 'log'
             commits = @scm.log
             self.output_history commits
         end
 
+        # pull from the main remote
+        if action == 'pull'
+            @scm.pull
+        end
+
         # push the current project
-        if args[:action] == 'push'
+        if action == 'push'
             @scm.push
         end
 
+        # undo all changes since last save
+        if action == 'reset'
+            @scm.reset
+        end
+
         # save a new version, which means commit and push
-        if args[:action] == 'save'
+        if action == 'save'
             @scm.save
             puts "\n\033[032mSaved a new version!\033[0m"
         end
 
+        # switch to a branch
+        if action == 'switch'
+            @scm.checkout args[0]
+        end
+
         # get the current status of files
-        if args[:action] == 'status'
+        if action == 'status'
             files = @scm.status
             self.output_status files
         end
 
+        # recover a file from a warp
+        if action == 'recover'
+            @scm.recover args[0]
+        end
+
         # warp to a past version
-        if args[:action] == 'warp'
-            @scm.warp
+        if action == 'warp'
+            @scm.warp args[0]
         end
     end
 
@@ -124,14 +160,26 @@ class Version50
         end
 
         # save config
+        FileUtils.mkdir(Dir.pwd + '/.version50-warps')
         File.open(Dir.pwd + '/.version50', 'w') do |f|
             f.write config.to_yaml
         end
 
-        puts "\n\033[032mYour project was created successfully, now have fun!"
+        puts "\n\033[032mYour project was created successfully!"
         puts "<3 version50\033[0m"
 
         return config
+    end
+
+    # help text
+    def help
+        puts "\033[34mThis is Version50.\033[0m"
+        puts "Here are some things you can do!"
+        puts "* history: View the history of your project's versions"
+        puts "* recover: Recover an earlier version of a file"
+        puts "* save: Save a version of your project"
+        puts "* status: Get the current status of your project"
+        puts "* warp: Warp back to an earlier point in time"
     end
 
     # given a parsed SCM history output, show log
@@ -233,5 +281,10 @@ class Version50
         if config['scm'] == 'git'
             return Git.new(self)
         end
+    end
+
+    # version number
+    def version
+        puts "This is Version50 v0.0.1"
     end
 end

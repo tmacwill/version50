@@ -1,11 +1,24 @@
-require 'fileutils'
-require 'tmpdir'
-
 require 'version50/scm'
 
 class Git < SCM
+    # create a branch
+    def branch b
+        `git branch #{b}`
+    end
+
+    # checkout a branch
+    def checkout b
+        super
+        `git checkout #{b}`
+    end
+
+    # clone a repository
+    def clone url, path = ''
+        `git clone #{url} #{path}`
+    end
+
     # commit a new version without pushing
-    def commit
+    def commit(options = {})
         # prompt for commit message
         message = super
 
@@ -30,7 +43,7 @@ class Git < SCM
     # create a new repo
     def init
         `git init`
-        `echo ".version50" > .gitignore`
+        `echo ".version50\n.version50-warps" > .gitignore`
     end
 
     # view the project history
@@ -56,12 +69,26 @@ class Git < SCM
         return commits
     end
 
+    # return to the present
+    def present
+        `git reset --hard`
+        `git checkout master > /dev/null 2> /dev/null`
+    end
+
     def pull
+        # save before doing anything
+        self.save({ :quiet => true })
+        `git pull --rebase`
     end
 
     # push existing commits
     def push
         `git push -u origin master > /dev/null 2>&1`
+    end
+
+    # reset all changes since last commit
+    def reset
+        `git reset --hard`
     end
 
     # view changed files
@@ -118,27 +145,11 @@ class Git < SCM
     end
 
     # warp to a specific version
-    def warp
-        # save current state before doing anything
-        revision = super
-
-        # determine project root and warp destination
-        path = @version50.root
-        dest = "version50-#{revision[:revision]}"
-
-        # create temporary directory to clone project into
-        Dir.mktmpdir do |d|
-            # clone project into temporary directory and revert to given revision
-            Dir.chdir(File.expand_path d)
-            `git clone #{path} . > /dev/null 2> /dev/null`
+    def warp r = nil
+        # save current state and determine revision to warp to
+        revision = super r
+        if revision
             `git checkout #{revision[:id]} -f > /dev/null 2> /dev/null`
-
-            # switch back to project root and create folder for warp
-            Dir.chdir(File.expand_path path)
-            FileUtils.mkdir dest
-
-            # move all files in temporary directory into warp directory
-            FileUtils.mv(Dir.glob(File.expand_path(d) + '/*'), dest)
         end
     end
 end
