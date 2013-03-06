@@ -44,6 +44,9 @@ class SCM
     def config info
     end
 
+    def download(url, path = '')
+    end
+
     # initialize a new repo
     def init
     end

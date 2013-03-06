@@ -25,6 +25,19 @@ class Version50
         config = self.parse_config
         @scm = self.scm config
 
+        # download a repository
+        if action == 'download'
+            if args[0] =~ /git/
+                @scm = self.scm({ 'scm' => 'git' })
+            end
+
+            # download repository
+            puts "\033[033mDownloading project...\033[0m"
+            @scm.download args[0], args[1]
+            puts "\033[032mDownload complete!\033[0m"
+            return
+        end
+
         # no configuration file, so prompt to create a new project
         if !config
             config = self.create

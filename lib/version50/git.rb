@@ -13,8 +13,8 @@ class Git < SCM
     end
 
     # clone a repository
-    def clone url, path = ''
-        `git clone #{url} #{path}`
+    def download(url, path = '')
+        `git clone #{url} #{path} > /dev/null 2> /dev/null`
     end
 
     # commit a new version without pushing
